@@ -56,7 +56,7 @@ KeyWord keyWdTbl[] = {
 	{"", End_list}
 };
 
-int main(int args, char *argv[]){
+int main(int argc, char *argv[]){
 	if (argc == 1) exit(1);
 	fin.open(argv[1]); if (!fin) exit(1);
 
@@ -130,4 +130,23 @@ int nextCh(){
     if (c == EOF) return c;
     if ( (c=fin.get() ) == EOF) fin.close();
     return c;
+}
+
+bool is_ope2(int c1, int c2){
+    char s[] = "  ";
+    if (c1 == '\0' || c2 == '\0') return false;
+    s[1] = c1;
+    s[2] = c2;
+
+    return strstr(" <= >= == != ", s) != NULL;
+}
+
+TknKind get_kind(const string& s){
+    for (int i=0; keyWdTbl[i].keyKind != End_list; ++i){
+        if (s == keyWdTbl[i].keyName) return keyWdTbl[i].keyKind;
+    }
+    if (ctyp[ s[0] ] == Letter ) return Ident;
+    if (ctyp[ s[0] ] == Digit ) return IntNum;
+
+    return Others;
 }
