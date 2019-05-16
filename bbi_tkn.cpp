@@ -1,11 +1,60 @@
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <string>
-#include <cstdlib>
-#include <cctype>
+#include "bbi.h"
+//#include "bbi_prot.h"
 
-using namespace std;
+struct KeyWord {
+	const char* keyName;
+	TknKind keyKind;
+};
+
+KeyWord keyWdTbl[] = {
+    {"func", Func}, {"var", Var},
+	{"if", If}, {"elif", Elif},
+    {"else", Else}, {"for", For},
+    {"to", To}, {"step", Step},
+    {"while", While}, {"end", End},
+    {"break", Break}, {"return", Return},
+	{"print", Print}, {"println", Println},
+    {"option", Option}, {"input", Input},
+    {"toint", Toint}, {"exit", Exit},
+	{"(", Lparen}, {"}", Rparen},
+	{"[", Lbracket}, {"]", Rbracket},
+	{"+", Plus}, {"-", Minus},
+	{"*", Multi}, {"/", Divi},
+	{"==", Equal}, {"!=", NotEq},
+	{"<", Less}, {"<=", LessEq},
+	{">", Great}, {">=", GreatEq},
+	{"&&", And}, {"||", Or},
+	{"!", Not}, {"%", Mod},
+	{"?", Ifsub}, {"=", Assign},
+    {"\\", IntDivi}, {",", Comma},
+    {"\"", DblQ},
+	{"@dummy", END_Keylist}
+};
+
+int srcLineno;
+TknKind ctyp[256];
+char *token_p;
+bool endOfFile_F;
+char buf[LIN_SIZ + 5];
+ifstream fin;
+#define MAX_LINE 2000
+
+void initChTyp(){
+    int i;
+
+    for (i=0; i < 256; ++i) { ctyp[i] = Others; }
+    for (i='0'; i <= '9'; ++i) { ctyp[i] = Digit; }
+    for (i='A'; i <= 'Z'; ++i) { ctyp[i] = Letter; }
+    for (i='a'; i <= 'z'; ++i) { ctyp[i] = Letter; }
+    ctyp['('] = Lparen; ctyp[')'] = Rparen;
+    ctyp['<'] = Less; ctyp['>'] = Great;
+    ctyp['+'] = Plus; ctyp['-'] = Minus;
+    ctyp['*'] = Multi; ctyp['/'] = Divi;
+    ctyp['_'] = Letter; ctyp['='] = Assign;
+    ctyp[','] = Comma; ctyp['"'] = DblQ;
+}
+
+///// 20190517 //////
 
 enum TknKind {
 	Lparen=1, Rparen, Plus, Minus, Multi, Divi,
@@ -38,24 +87,6 @@ TknKind ctyp[256];
 Token token;
 ifstream fin;
 
-struct KeyWord {
-	const char* keyName;
-	TknKind keyKind;
-};
-
-KeyWord keyWdTbl[] = {
-	{"if", If}, {"else", Else},
-	{"end", End}, {"print", Print},
-	{"(", Lparen}, {")", Rparen},
-	{"+", Plus}, {"-", Minus},
-	{"*", Multi}, {"/", Divi},
-	{"=", Assign}, {",", Comma},
-	{"==", Equal}, {"!=", NotEq},
-	{"<", Less}, {"<=", LessEq},
-	{">", Great}, {">=", GreatEq},
-	{"", End_list}
-};
-
 int main(int argc, char *argv[]){
 	if (argc == 1) exit(1);
 	fin.open(argv[1]); if (!fin) exit(1);
@@ -68,21 +99,6 @@ int main(int argc, char *argv[]){
     }
 
     return 0;
-}
-
-void initChTyp(){
-    int i;
-
-    for (i=0; i < 256; ++i) { ctyp[i] = Others; }
-    for (i='0'; i <= '9'; ++i) { ctyp[i] = Digit; }
-    for (i='A'; i <= 'Z'; ++i) { ctyp[i] = Letter; }
-    for (i='a'; i <= 'z'; ++i) { ctyp[i] = Letter; }
-    ctyp['('] = Lparen; ctyp[')'] = Rparen;
-    ctyp['<'] = Less; ctyp['>'] = Great;
-    ctyp['+'] = Plus; ctyp['-'] = Minus;
-    ctyp['*'] = Multi; ctyp['/'] = Divi;
-    ctyp['_'] = Letter; ctyp['='] = Assign;
-    ctyp[','] = Comma; ctyp['"'] = DblQ;
 }
 
 Token nextTkn(){
