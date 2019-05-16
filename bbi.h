@@ -20,7 +20,7 @@ using namespace std;
 
 enum TknKind{
     Lparen='(', Rparen=')', Lbracket='[', Rbracket=']', 
-    Plus='+', Divi='/', Mod='%', Not='!', Ifsub='?', Assign='=',
+    Plus='+', Minus='-', Multi='*', Divi='/', Mod='%', Not='!', Ifsub='?', Assign='=',
     IntDivi='\\', Comma=',', DblQ='"',
     Func=150, Var, If, Elif, Else, For, To, Step, While, End, Break,
     Return, Option, Print, Println, Input, Toint, Exit,

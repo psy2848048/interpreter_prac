@@ -56,13 +56,6 @@ void initChTyp(){
 
 ///// 20190517 //////
 
-enum TknKind {
-	Lparen=1, Rparen, Plus, Minus, Multi, Divi,
-	Assign, Comma, DblQ,
-	Equal, NotEq, Less, LessEq, Great, GreatEq,
-	If, Else, End, Print, Ident, IntNum,
-	String, Letter, Digit, EofTkn, Others, End_list
-};
 
 struct Token {
 	TknKind kind;
