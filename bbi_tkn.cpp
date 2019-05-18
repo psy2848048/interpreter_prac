@@ -77,9 +77,9 @@ void nextLine(){
         return;
     }
     if (strlen(buf) > LIN_SIZ)
-        err_exit("Code should be written within ", LIN_SIZ, " characters per one line");
+        err_exit("Code should be written within ", LIN_SIZ, " characters per one line", "");
     if (++srcLineno > MAX_LINE)
-        err_exit("Code exceeded ", MAX_LINE, " (s).");
+        err_exit("Code exceeded ", MAX_LINE, " (s).", "");
 
     token_p = buf;
 }
@@ -111,64 +111,34 @@ Token nextTkn(){
             break;
 
         case Digit:
-            for (num=0; ctyp[ch] == Digit; ch = nextCh()){
-                num = num*10 + (ch - '0');
-            }
-            return Token(IntNum, txt, num);
+            kd = TknKind::IntNum;
+            while(ctyp[CH] == Digit){ txt += CH; NEXT_CH(); }
+            if (CH == '.') {kd = TknKind::DblNum; txt += CH; NEXT_CH(); }
+            while(ctyp[CH] == Digit){ txt += CH; NEXT_CH(); }
+            return Token(kd, txt, atof(txt.c_str()));
 
         case DblQ:
-            for (ch=nextCh(); ch!= EOF && ch!='\n' && ch != '"'; ch = nextCh() ) txt += ch;
-            if (ch != '"'){ cout << "No closure for string litteral\n"; exit(1); }
-            ch = nextCh();
-            return Token(String, txt);
+            NEXT_CH();
+            while(CH != '\0' && CH != '"'){ txt += CH; NEXT_CH(); }
+            if (CH != '"') NEXT_CH(); else err_exit("No closure for string litteral\n", "", "", "");
+            return Token(TknKind::String, txt);
 
         default:
-            txt += ch; ch0 = ch; ch = nextCh();
-            if (is_ope2(ch0, ch)){ txt += ch; ch = nextCh(); }
+            if (CH == '/' && C2 == '/') return Token(TknKind::EofLine);
+            if (is_ope2(CH, C2)){
+                txt += CH;
+                txt += C2;
+                NEXT_CH();
+                NEXT_CH();
+            } else {
+                txt += CH;
+                NEXT_CH();
+            }
     }
-
     kd = get_kind(txt);
-    if (kd == Others){
-        cout << "Wrong token: " << txt << endl;
-        exit(1);
-    }
 
+    if (kd == TknKind::Others) err_exit("Wrong token: ", txt, "", "");
     return Token(kd, txt);
-}
-
-///// 20190517 //////
-
-/* Prototype */
-void initChTyp();
-Token nextTkn();
-int nextCh();
-bool is_ope2(int c1, int c2);
-
-/************/
-
-TknKind ctyp[256];
-Token token;
-ifstream fin;
-
-int main(int argc, char *argv[]){
-	if (argc == 1) exit(1);
-	fin.open(argv[1]); if (!fin) exit(1);
-
-	cout << "Text        kind intVal\n";
-	initChTyp();
-	for (token = nextTkn(); token.kind != EofTkn; token = nextTkn()){
-        cout << left << setw(10) << token.text << right << setw(3) 
-            << token.kind << " " << token.intVal << endl;
-    }
-
-    return 0;
-}
-
-int nextCh(){
-    static int c = 0;
-    if (c == EOF) return c;
-    if ( (c=fin.get() ) == EOF) fin.close();
-    return c;
 }
 
 bool is_ope2(int c1, int c2){
@@ -177,15 +147,56 @@ bool is_ope2(int c1, int c2){
     s[1] = c1;
     s[2] = c2;
 
-    return strstr(" <= >= == != ", s) != NULL;
+    return strstr(" ++ -- <= >= == != && || ", s) != NULL;
 }
 
 TknKind get_kind(const string& s){
-    for (int i=0; keyWdTbl[i].keyKind != End_list; ++i){
+    for (int i=0; keyWdTbl[i].keyKind != TknKind::END_Keylist; ++i){
         if (s == keyWdTbl[i].keyName) return keyWdTbl[i].keyKind;
     }
-    if (ctyp[ s[0] ] == Letter ) return Ident;
-    if (ctyp[ s[0] ] == Digit ) return IntNum;
+    if (ctyp[ s[0] ] == TknKind::Letter || ctyp[ s[0] ] == TknKind::Doll) return TknKind::Ident;
+    if (ctyp[ s[0] ] == Digit ) return TknKind::DblNum;
+    return TknKind::Others;
+}
 
-    return Others;
+Token chk_nextTkn(const Token& tk, int kind2){
+    if (tk.kind != kind2) err_exit(err_msg(tk.text, kind_to_s(kind2)), "", "", "");
+    return nextTkn();
+}
+
+void set_token_p(char *p){
+    token_p = p;
+}
+
+string kind_to_s(int kd){
+    for (int i=0; ; ++i){
+        if (keyWdTbl[i].keyKind == TknKind::END_Keylist) break;
+        if (keyWdTbl[i].keyKind == kd) return keyWdTbl[i].keyName;
+    }
+    return "";
+}
+
+string kind_to_s(const CodeSet& cd){
+    switch (cd.kind){
+    case TknKind::Lvar:
+    case TknKind::Gvar:
+    case TknKind::Fcall:
+        return tableP(cd)->name;
+    
+    case TknKind::IntNum:
+    case TknKind::DblNum:
+        return dbl_to_s(cd.dblVal);
+
+    case TknKind::String:
+        return string("\"") + cd.text + "\"";
+
+    case TknKind::EofLine:
+        return "";
+    }
+    return kind_to_s(cd.kind);
+}
+
+int get_lineNo(){
+    extern int Pc;
+    return (Pc == -1) ? srcLineno : Pc;
 }
