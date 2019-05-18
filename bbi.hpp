@@ -33,7 +33,7 @@ struct Token {
     TknKind kind;
     string text;
     double dblVal;
-    Token() {kind=Others; text=""; dblVal=0.0;}
+    Token() {kind=TknKind::Others; text=""; dblVal=0.0;}
     Token(TknKind k){
         kind = k;
         text="";
@@ -75,7 +75,7 @@ struct SymTbl{
     SymTbl(){ clear(); }
 
     void clear(){
-        name = ""; nmKind = noId; dtTyp = NON_T;
+        name = ""; nmKind = SymKind::noId; dtTyp = NON_T;
         aryLen=0; args=0; adrs=0; frame=0;
     }
 };
@@ -88,7 +88,7 @@ struct CodeSet{
     int jmpAdrs;
 
     void clear(){
-        kind = Others;
+        kind = TknKind::Others;
         text = "";
         dblVal = 0.0;
         jmpAdrs = 0;

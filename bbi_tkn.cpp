@@ -1,5 +1,5 @@
-#include "bbi.h"
-//#include "bbi_prot.h"
+#include "bbi.hpp"
+#include "bbi_prot.hpp"
 
 struct KeyWord {
 	const char* keyName;
@@ -7,28 +7,28 @@ struct KeyWord {
 };
 
 KeyWord keyWdTbl[] = {
-    {"func", Func}, {"var", Var},
-	{"if", If}, {"elif", Elif},
-    {"else", Else}, {"for", For},
-    {"to", To}, {"step", Step},
-    {"while", While}, {"end", End},
-    {"break", Break}, {"return", Return},
-	{"print", Print}, {"println", Println},
-    {"option", Option}, {"input", Input},
-    {"toint", Toint}, {"exit", Exit},
-	{"(", Lparen}, {"}", Rparen},
-	{"[", Lbracket}, {"]", Rbracket},
-	{"+", Plus}, {"-", Minus},
-	{"*", Multi}, {"/", Divi},
-	{"==", Equal}, {"!=", NotEq},
-	{"<", Less}, {"<=", LessEq},
-	{">", Great}, {">=", GreatEq},
-	{"&&", And}, {"||", Or},
-	{"!", Not}, {"%", Mod},
-	{"?", Ifsub}, {"=", Assign},
-    {"\\", IntDivi}, {",", Comma},
-    {"\"", DblQ},
-	{"@dummy", END_Keylist}
+    {"func", TknKind::Func}, {"var", TknKind::Var},
+	{"if", TknKind::If}, {"elif", TknKind::Elif},
+    {"else", TknKind::Else}, {"for", TknKind::For},
+    {"to", TknKind::To}, {"step", TknKind::Step},
+    {"while", TknKind::While}, {"end", TknKind::End},
+    {"break", TknKind::Break}, {"return", TknKind::Return},
+	{"print", TknKind::Print}, {"println", TknKind::Println},
+    {"option", TknKind::Option}, {"input", TknKind::Input},
+    {"toint", TknKind::Toint}, {"exit", TknKind::Exit},
+	{"(", TknKind::Lparen}, {"}", TknKind::Rparen},
+	{"[", TknKind::Lbracket}, {"]", TknKind::Rbracket},
+	{"+", TknKind::Plus}, {"-", TknKind::Minus},
+	{"*", TknKind::Multi}, {"/", TknKind::Divi},
+	{"==", TknKind::Equal}, {"!=", TknKind::NotEq},
+	{"<", TknKind::Less}, {"<=", TknKind::LessEq},
+	{">", TknKind::Great}, {">=", TknKind::GreatEq},
+	{"&&", TknKind::And}, {"||", TknKind::Or},
+	{"!", TknKind::Not}, {"%", TknKind::Mod},
+	{"?", TknKind::Ifsub}, {"=", TknKind::Assign},
+    {"\\", TknKind::IntDivi}, {",", TknKind::Comma},
+    {"\"", TknKind::DblQ},
+	{"@dummy", TknKind::END_Keylist}
 };
 
 int srcLineno;
@@ -42,70 +42,72 @@ ifstream fin;
 void initChTyp(){
     int i;
 
-    for (i=0; i < 256; ++i) { ctyp[i] = Others; }
-    for (i='0'; i <= '9'; ++i) { ctyp[i] = Digit; }
-    for (i='A'; i <= 'Z'; ++i) { ctyp[i] = Letter; }
-    for (i='a'; i <= 'z'; ++i) { ctyp[i] = Letter; }
-    ctyp['('] = Lparen; ctyp[')'] = Rparen;
-    ctyp['<'] = Less; ctyp['>'] = Great;
-    ctyp['+'] = Plus; ctyp['-'] = Minus;
-    ctyp['*'] = Multi; ctyp['/'] = Divi;
-    ctyp['_'] = Letter; ctyp['='] = Assign;
-    ctyp[','] = Comma; ctyp['"'] = DblQ;
+    for (i=0; i < 256; ++i) { ctyp[i] = TknKind::Others; }
+    for (i='0'; i <= '9'; ++i) { ctyp[i] = TknKind::Digit; }
+    for (i='A'; i <= 'Z'; ++i) { ctyp[i] = TknKind::Letter; }
+    for (i='a'; i <= 'z'; ++i) { ctyp[i] = TknKind::Letter; }
+    ctyp['('] = TknKind::Lparen; ctyp[')'] = TknKind::Rparen;
+    ctyp['<'] = TknKind::Less; ctyp['>'] = TknKind::Great;
+    ctyp['+'] = TknKind::Plus; ctyp['-'] = TknKind::Minus;
+    ctyp['*'] = TknKind::Multi; ctyp['/'] = TknKind::Divi;
+    ctyp['_'] = TknKind::Letter; ctyp['='] = TknKind::Assign;
+    ctyp[','] = TknKind::Comma; ctyp['"'] = TknKind::DblQ;
 }
 
-///// 20190517 //////
-
-
-struct Token {
-	TknKind kind;
-	string text;
-	int intVal;
-	Token() { kind=Others; text=""; intVal=0;}
-
-	Token (TknKind k, const string& s, int d=0){
-		kind = k; text = s; intVal=d;	
-	}
-};
-
-/* Prototype */
-void initChTyp();
-Token nextTkn();
-int nextCh();
-bool is_ope2(int c1, int c2);
-TknKind get_kind(const string& s);
-/************/
-
-TknKind ctyp[256];
-Token token;
-ifstream fin;
-
-int main(int argc, char *argv[]){
-	if (argc == 1) exit(1);
-	fin.open(argv[1]); if (!fin) exit(1);
-
-	cout << "Text        kind intVal\n";
-	initChTyp();
-	for (token = nextTkn(); token.kind != EofTkn; token = nextTkn()){
-        cout << left << setw(10) << token.text << right << setw(3) 
-            << token.kind << " " << token.intVal << endl;
+void fileOpen(char* fname){
+    srcLineno = 0;
+    endOfFile_F = false;
+    fin.open(fname);
+    if (!fin){
+        cout << "Cannot open " << fname << "\n";
+        exit(1);
     }
-
-    return 0;
 }
+
+void nextLine(){
+    string s;
+
+    if (endOfFile_F) return;
+
+    fin.getline(buf, LIN_SIZ+5);
+    if (fin.eof()){
+        fin.clear();
+        fin.close();
+        endOfFile_F = true;
+        return;
+    }
+    if (strlen(buf) > LIN_SIZ)
+        err_exit("Code should be written within ", LIN_SIZ, " characters per one line");
+    if (++srcLineno > MAX_LINE)
+        err_exit("Code exceeded ", MAX_LINE, " (s).");
+
+    token_p = buf;
+}
+
+Token nextLine_tkn(){
+    nextLine();
+    return nextTkn();
+}
+
+#define CH (*token_p)
+#define C2 (*(token_p+1))
+#define NEXT_CH() ++token_p
 
 Token nextTkn(){
     TknKind kd;
-    int ch0, num = 0;
-    static int ch = ' ';
     string txt = "";
+    
+    if (endOfFile_F) return Token(TknKind::EofProg);
+    while (isspace(CH)) NEXT_CH();
+    if (CH == '\0') return Token(TknKind::EofLine);
 
-    while (isspace(ch)) { ch = nextCh(); }
-    if (ch == EOF) return Token(EofTkn, txt);
-
-    switch (ctyp[ch]){
+    switch (ctyp[CH]){
+        case Doll:
         case Letter:
-            for ( ; ctyp[ch] == Letter || ctyp[ch] == Digit; ch = nextCh() ) txt += ch;
+            txt += CH; NEXT_CH();
+            while (ctyp[CH] == Letter || ctyp[CH] == Digit){
+                txt += CH; NEXT_CH();
+            }
             break;
 
         case Digit:
@@ -132,6 +134,34 @@ Token nextTkn(){
     }
 
     return Token(kd, txt);
+}
+
+///// 20190517 //////
+
+/* Prototype */
+void initChTyp();
+Token nextTkn();
+int nextCh();
+bool is_ope2(int c1, int c2);
+
+/************/
+
+TknKind ctyp[256];
+Token token;
+ifstream fin;
+
+int main(int argc, char *argv[]){
+	if (argc == 1) exit(1);
+	fin.open(argv[1]); if (!fin) exit(1);
+
+	cout << "Text        kind intVal\n";
+	initChTyp();
+	for (token = nextTkn(); token.kind != EofTkn; token = nextTkn()){
+        cout << left << setw(10) << token.text << right << setw(3) 
+            << token.kind << " " << token.intVal << endl;
+    }
+
+    return 0;
 }
 
 int nextCh(){
