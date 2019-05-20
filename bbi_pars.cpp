@@ -236,4 +236,104 @@ void set_aryLen(){
     if (token.kind != TknKind::IntNum)
         err_exit("Set positive integer for the length of the array: ", token.text, "", "");
     tmpTb.aryLen = (int)token.dblVal + 1;
+    token = chk_nextTkn(nextTkn(), ']');
+    if (token.kind == '[') err_exit("No multidimension array", "", "", "");
+}
+
+void fucDecl(){
+    extern vector<SymTbl> Gtable;
+    int tblNbr, patch_line, fncTblNbr;
+
+    if (blkNest > 0) err_exit("Wrong definition location of function", "", "", "");
+    fncDecl_F = true;
+    localAdrs = 0;
+    set_startLtable();
+    patch_line = setCode(TknKind::Func, NO_FIX_ADRS);
+    token = nextTkn();
+
+    fncTblNbr = searchName(token.text, 'F');
+    Gtable[fncTblNbr].dtTyp = DtType::DBL_T;
+
+    token = nextTkn();
+    token = chk_nextTkn(token, '(');
+    setCode('(');
+    if (token.kind != ')'){
+        for(;; token = nextTkn()){
+            set_name();
+            tblNbr = enter(tmpTb, SymKind::paraId);
+            setCode(TknKind::Lvar, tblNbr);
+            ++Gtable[fncTblNbr].args;
+            if (token.kind != ',') break;
+            setCode(',');
+        }
+    }
+    token = chk_nextTkn(token, ')');
+    setCode(')');
+    setCode_EofLine();
+    convert_block();
+
+    backPatch(patch_line, get_lineNo());
+    setCode_End();
+    Gtable[fncTblNbr].frame = localAdrs;
+
+    if (Gtable[fncTblNbr].name == "main"){
+        mainTblNbr = fncTblNbr;
+        if (Gtable[mainTblNbr].args != 0)
+            err_exit("No temp variable in main function", "", "", "");
+    }
+    fncDecl_F = false;
+}
+
+void backPatch(int line, int n){
+    *SHORT_P(intercode[line] + 1) = (short) n;
+}
+
+void setCode(int cd){
+    *codebuf_p++ = (char) cd;
+}
+
+int setCode(int cd, int nbr){
+    *codebuf_p++ = (char) cd;
+    *SHORT_P(codebuf_p) = (short) nbr;
+    codebuf_p += SHORT_SIZ;
+    return get_lineNo();
+}
+
+void setCode_rest(){
+    extern char *token_p;
+    strcpy(codebuf_p, token_p);
+    codebuf_p += strlen(token_p) + 1;
+}
+
+void setCode_End(){
+    if (token.kind != TknKind::End ) err_exit(err_msg(token.text, "end"), "", "", "");
+    setCode(TknKind::End);
+    token = nextTkn();
+    setCode_EofLine();
+}
+
+void setCode_EofLine(){
+    if (token.kind != TknKind::EofLine) err_exit("Wrong usage", token.text, "", "");
+    push_intercode();
+    token = nextLine_tkn();
+}
+
+void push_intercode(){
+    int len; char *p;
+    *codebuf_p++ = '\0';
+    if ((len = codebuf_p-codebuf) >= LIN_SIZ)
+        err_exit("To long internal code. Please make it shorter", "", "", "");
+
+    try{
+        p = new char[len];
+        memcpy(p, codebuf, len);
+        intercode.push_back(p);
+    } catch (bad_alloc){
+        err_exit("No memory space allocatable!", "", "", "");
+    }
+    codebuf_p = codebuf;
+}
+
+bool is_localScope(){
+    return fncDecl_F;
 }
