@@ -222,7 +222,7 @@ void var_nameChk(const Token& tk){
 }
 
 void set_name(){
-    if (token.kind != TknKind::Ident) err_exit("Need identifier: ", token.text);
+    if (token.kind != TknKind::Ident) err_exit("Need identifier: ", token.text, "", "");
     tmpTb.clear();
     tmpTb.name = token.text;
     token = nextTkn();
