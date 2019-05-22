@@ -214,7 +214,7 @@ void varDecl(){
 }
 
 void var_nameChk(const Token& tk){
-    if (tk.kind != TknKind::Ident) err_exit( err_msg(tk.text, "identifier"));
+    if (tk.kind != TknKind::Ident) err_exit( err_msg(tk.text, "identifier"), "", "", "");
     if (is_localScope() && tk.text[0] == '$')
         err_exit("Connot define a variable which contains '$': ", tk.text, "", "");
     if ( searchName(tk.text, 'V') != -1)
