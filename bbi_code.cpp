@@ -290,17 +290,13 @@ int get_memAdrs(CodeSet& cd){
 
     d = get_expression('[', ']');
     if ((int)d != d)
-        err_exit("No float ..");
+        err_exit("No float ..", "", "", "");
 
     if (syntaxChk_mode) return adr;
 
-    for (;;){ // check this line later
-        index = (int) d;
-        line = cd.jmpAdrs;
-        cd = firstCode(line);
-        if (cd.kind == TknKind::Elif || cd.kind == TknKind::Else) continue;
-        if (cd.kind == TknKind::End) break;
-    }
+    index = (int) d;
+    if (index < 0 || index >= len)
+        err_exit(index, " is out of range (range: 0 - ", len-1, ")");
     
     return adr + index;
 }
