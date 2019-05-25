@@ -15,7 +15,7 @@ using namespace std;
 
 #define SHORT_SIZ sizeof(short int)
 #define SHORT_P(p) (short int *)(p)
-#define UCHAR_P(p) (unsinged char *)(p)
+#define UCHAR_P(p) (unsigned char *)(p)
 #define LIN_SIZ 255
 
 enum TknKind{

@@ -300,3 +300,65 @@ int get_memAdrs(CodeSet& cd){
     
     return adr + index;
 }
+
+int endline_of_If(int line){
+
+}
+
+void chk_EofLine(){
+
+}
+
+TknKind lookCode(int line){
+
+}
+
+CodeSet chk_nextCode(const CodeSet& cd, int kind2){
+
+}
+
+CodeSet firstCode(int line){
+    code_ptr = intercode[line];
+    return nextCode();
+}
+
+CodeSet nextCode(){
+    TknKind kd;
+    short int jmpAdrs, tblNbr;
+
+    if (*code_ptr == '\0') return CodeSet(TknKind::EofLine);
+    kd = (TknKind)*UCHAR_P(code_ptr++);
+
+    switch (kd){
+    case TknKind::Func:
+    case TknKind::While:
+    case TknKind::For:
+    case TknKind::If:
+    case TknKind::Elif:
+    case TknKind::Else:
+        jmpAdrs = *SHORT_P(code_ptr);
+        code_ptr += SHORT_SIZ;
+        return CodeSet(kd, -1, jmpAdrs);
+
+    case TknKind::String:
+        tblNbr = *SHORT_P(code_ptr);
+        code_ptr += SHORT_SIZ;
+        return CodeSet(kd, strLITERAL[tblNbr].c_str());
+
+    case TknKind::IntNum:
+    case TknKind::DblNum:
+        tblNbr = *SHORT_P(code_ptr);
+        code_ptr += SHORT_SIZ;
+        return CodeSet(kd, nbrLITERAL[tblNbr]);
+
+    case TknKind::Fcall:
+    case TknKind::Gvar:
+    case TknKind::Lvar:
+        tblNbr = *SHORT_P(code_ptr);
+        code_ptr += SHORT_SIZ;
+        return CodeSet(kd, tblNbr, -1);
+    
+    default:
+        return CodeSet(kd);
+    }
+}
