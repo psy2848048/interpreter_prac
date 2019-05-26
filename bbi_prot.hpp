@@ -63,7 +63,7 @@ void fncCall(int fncNbr);
 void fncExec(int fncNbr);
 void sysFNcExec_syntax(TknKind kd);
 void sysFncExec(TknKind kd);
-int get_memAdrs(CodeSet& cd);
+int get_memAdrs(const CodeSet& cd);
 int get_topAdrs(const CodeSet& cd);
 int endline_of_If(int line);
 void chk_EofLine();
